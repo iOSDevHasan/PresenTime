@@ -9,26 +9,29 @@ import SwiftUI
 
 struct TimerView: View {
 
-    let timerObject: TimerVM
+    let viewModel: TimerVM
     @State private var width: CGFloat = 0
-    @State private var durationTime: [Int] = []
-    @State private var totalTime: Int = 0
     @State private var isDurationButtonVisible: Bool = false
     @State private var showTimePicker = false
-    @State private var selectedSeconds: Int = 0
     @State private var showDurationTimePicker = false
-
+    @State private var selectedColor: Color = .blue
 
     var body: some View {
         VStack {
+            Text("PresenTime")
+                .font(.title.bold())
+            HStack {
+                ColorPicker("", selection: $selectedColor)
+                    .padding(.trailing, 10)
+            }
             // MARK: - Circle View
             ZStack {
                 Circle()
                     .stroke(lineWidth: width / 10)
-                    .foregroundStyle(timerObject.timerColor.opacity(0.4))
+                    .foregroundStyle(selectedColor.opacity(0.4))
                 Circle()
-                    .trim(from: 0.0, to: min(1-timerObject.progress, 1.0))
-                    .stroke(timerObject.timerColor.gradient, style: StrokeStyle(
+                    .trim(from: 0.0, to: min(1-viewModel.progress, 1.0))
+                    .stroke(selectedColor.gradient, style: StrokeStyle(
                         lineWidth: width / 10,
                         lineCap: .round,
                         lineJoin: .miter))
@@ -37,26 +40,26 @@ struct TimerView: View {
                 Circle()
                     .stroke(lineWidth: width / 20)
                     .foregroundStyle(Color(uiColor: .systemBackground))
-                    .shadow(color: timerObject.timerColor.opacity(0.6), radius: 5)
+                    .shadow(color: selectedColor.opacity(0.6), radius: 5)
                     .frame(width: width / 8)
                     .offset(x: -width / 2)
-                    .rotationEffect(.degrees(90.0 - 360 * timerObject.progress))
+                    .rotationEffect(.degrees(90.0 - 360 * viewModel.progress))
                 VStack {
-                    Text(displayTime(timerObject.length))
+                    Text(viewModel.length.displayTimeForTotalSeconds())
                         .monospacedDigit()
                         .font(.system(size: width / 12))
                         .minimumScaleFactor(0.5)
                         .lineLimit(1)
                         .frame(maxWidth: width / 2)
                     
-                    Text(displayTime(timerObject.remainingTime))
+                    Text(viewModel.remainingTime.displayTimeForTotalSeconds())
                         .monospacedDigit()
                         .font(.system(size: width / 3))
                         .minimumScaleFactor(0.5)
                         .lineLimit(1)
                         .frame(maxWidth: width / 1.2)
                 }
-                .foregroundStyle(timerObject.timerColor)
+                .foregroundStyle(selectedColor)
                 .bold()
                 .contentTransition(.numericText())
             }
@@ -64,28 +67,28 @@ struct TimerView: View {
                 width = size.width
             }
             .padding(width / 8)
-            .animation(.linear, value: timerObject.remainingTime)
+            .animation(.linear, value: viewModel.remainingTime)
 
             // MARK: - Action Buttons
             HStack {
                 Button {
-                    timerObject.startTimer()
+                    viewModel.startTimer()
                 } label: {
                     Image(systemName: "play.fill")
                 }
-                .modifier(ControlButtonStyle(color: timerObject.timerColor, disabled: timerObject.playButtonDisabled))
+                .modifier(ControlButtonStyle(color: selectedColor, disabled: viewModel.playButtonDisabled))
                 Button {
-                    timerObject.stopTimer()
+                    viewModel.stopTimer()
                 } label: {
                     Image(systemName: "pause.fill")
                 }
-                .modifier(ControlButtonStyle(color: timerObject.timerColor, disabled: timerObject.pauseButtonDisabled))
+                .modifier(ControlButtonStyle(color: selectedColor, disabled: viewModel.pauseButtonDisabled))
                 Button {
-                    timerObject.resetTimer()
+                    viewModel.resetTimer()
                 } label: {
                     Image(systemName: "gobackward")
                 }
-                .modifier(ControlButtonStyle(color: timerObject.timerColor, disabled: timerObject.resetButtonDisabled))
+                .modifier(ControlButtonStyle(color: selectedColor, disabled: viewModel.resetButtonDisabled))
             }
 
             // MARK: - Set&Duration Buttons
@@ -97,14 +100,14 @@ struct TimerView: View {
                         .foregroundStyle(.white)
                         .font(.system(size: 15).bold())
                         .padding(.all, 10)
-                        .background(Rectangle().fill(timerObject.timerColor))
+                        .background(Rectangle().fill(selectedColor))
                         .cornerRadius(10)
                 }
                 .sheet(isPresented: $showTimePicker) {
-                    PickerView(maxSeconds: nil, pickerName: "Set a time!", pickerColor: timerObject.timerColor) { selectedTime in
-                        timerObject.length = selectedTime
-                        selectedSeconds = selectedTime
-                        if selectedSeconds > 0 {
+                    PickerView(maxSeconds: nil, pickerName: "Set a time!", pickerColor: selectedColor) { selectedTime in
+                        viewModel.length = selectedTime
+                        if viewModel.length > 0 {
+                            viewModel.durationTime.removeAll()
                             isDurationButtonVisible = true
                         }
                     }
@@ -118,14 +121,14 @@ struct TimerView: View {
                         .foregroundStyle(.white)
                         .font(.system(size: 15).bold())
                         .padding(.all, 10)
-                        .background(Rectangle().fill(isDurationButtonVisible ? timerObject.timerColor : timerObject.timerColor.opacity(0.4)))
+                        .background(Rectangle().fill(isDurationButtonVisible ? selectedColor : selectedColor.opacity(0.4)))
                         .cornerRadius(10)
                 }
                 .disabled(!isDurationButtonVisible)
                 .sheet(isPresented: $showDurationTimePicker) {
-                    PickerView(maxSeconds: selectedSeconds, pickerName: "Add Duration!", pickerColor: timerObject.timerColor) { selectedTime in
-                        if selectedTime != selectedSeconds, !durationTime.contains(where: { $0 == selectedTime }) {
-                            durationTime.append(selectedTime)
+                    PickerView(maxSeconds: viewModel.length, pickerName: "Add Duration!", pickerColor: selectedColor) { selectedTime in
+                        if selectedTime != viewModel.length, !viewModel.durationTime.contains(where: { $0 == selectedTime }), selectedTime != 0 {
+                            viewModel.durationTime.append(selectedTime)
                         }
                     }
                     .presentationDetents([.medium])
@@ -135,42 +138,35 @@ struct TimerView: View {
             .padding()
 
             // MARK: - Duration List View
-            if !durationTime.isEmpty {
+            if !viewModel.durationTime.isEmpty {
                 VStack(alignment: .leading) {
                     Text("DURATIONS")
                         .foregroundStyle(.primary)
                         .font(.title2.bold())
                         .padding(.leading, 30)
                     List {
-                        ForEach(durationTime, id: \.self) { duration in
+                        ForEach(viewModel.durationTime, id: \.self) { duration in
                             HStack(spacing: 20) {
                                 Image(systemName: "clock")
-                                Text(displayTime(duration))
+                                Text(duration.displayTimeForTotalSeconds())
                             }
                             .font(.system(size: 20).bold())
                             .foregroundStyle(.white)
-                            .listRowBackground(timerObject.timerColor)
+                            .listRowBackground(selectedColor)
                         }
                         .onDelete { item in
-                            durationTime.remove(atOffsets: item)
+                            viewModel.durationTime.remove(atOffsets: item)
+                        }
+                        .onMove { index, item in
+                            viewModel.durationTime.move(fromOffsets: index, toOffset: item)
                         }
                     }
+                    .scrollIndicators(.hidden)
                     .scrollContentBackground(.hidden)
                 }
                 .padding()
             }
-        }
-    }
-    
-    private func displayTime(_ totalSeconds: Int) -> String {
-        let hours = totalSeconds / 3600
-        let minutes = (totalSeconds % 3600) / 60
-        let seconds = totalSeconds % 60
-        
-        if hours > 0 {
-            return String(format: "%01d:%02d:%02d", hours, minutes, seconds)
-        } else {
-            return String(format: "%01d:%02d", minutes, seconds)
+            Spacer()
         }
     }
 }
