@@ -10,11 +10,11 @@ import SwiftUI
 @Observable
 class TimerVM {
 
-    var timerColor: Color = .blue
     var length: Int = 0
     var timer: Timer? = nil
     var timeElapsed = 0
     var isTimerRunning = false
+    var durationTime: [Int] = []
     
     var remainingTime: Int {
         length - timeElapsed
@@ -23,13 +23,17 @@ class TimerVM {
     var progress: CGFloat {
         CGFloat(length - remainingTime) / CGFloat(length)
     }
-    
+
     func startTimer() {
         isTimerRunning = true
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [self] _ in
             if remainingTime > 0 {
                 timeElapsed += 1
+                if durationTime.contains(timeElapsed) {
+                    NotificationManager.shared.sendNotification(title: "PresenTime", subtitle: "The timer has reached \(timeElapsed.displayTimeForTotalSeconds())!", sound: .defaultRingtone)
+                }
             } else {
+                NotificationManager.shared.sendNotification(title: "PresenTime", subtitle: "Time is up", sound: .defaultCritical)
                 stopTimer()
             }
         }

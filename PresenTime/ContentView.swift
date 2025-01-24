@@ -9,7 +9,11 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        TimerView(timerObject: TimerVM())
+        TimerView(viewModel: TimerVM())
+            .onAppear {
+                NotificationManager.shared.requestPermission { _ in }
+                // TODO: Eger izin vermezse izin almasi icin ayarlara yonlendiricez. Popup.
+            }
     }
 }
 
