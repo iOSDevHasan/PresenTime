@@ -7,14 +7,15 @@
 
 import SwiftUI
 
-@Observable
-class TimerVM {
+final class TimerVM: ObservableObject {
 
-    var length: Int = 0
-    var timer: Timer? = nil
-    var timeElapsed = 0
-    var isTimerRunning = false
-    var durationTime: [Int] = []
+    @Published var length: Int = 0
+    @Published var timer: Timer? = nil
+    @Published var timeElapsed = 0
+    @Published var isTimerRunning = false
+    @Published var durationTime: [Int] = []
+
+    var lastActiveTimeStamp: Date?
     
     var remainingTime: Int {
         length - timeElapsed
@@ -24,8 +25,25 @@ class TimerVM {
         CGFloat(length - remainingTime) / CGFloat(length)
     }
 
+    var playButtonDisabled: Bool {
+        guard remainingTime > 0, !isTimerRunning else { return true}
+        return false
+    }
+    
+    var pauseButtonDisabled: Bool {
+        guard remainingTime > 0, isTimerRunning else { return true }
+        return false
+    }
+    
+    var resetButtonDisabled: Bool {
+        guard remainingTime != length, !isTimerRunning else { return true }
+        return false
+    }
+
     func startTimer() {
         isTimerRunning = true
+        lastActiveTimeStamp = Date()
+        UserDefaults.standard.set(lastActiveTimeStamp?.timeIntervalSince1970, forKey: "lastActiveTimeStamp")
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [self] _ in
             if remainingTime > 0 {
                 timeElapsed += 1
@@ -50,19 +68,13 @@ class TimerVM {
         timeElapsed = 0
         isTimerRunning = false
     }
-    
-    var playButtonDisabled: Bool {
-        guard remainingTime > 0, !isTimerRunning else { return true}
-        return false
-    }
-    
-    var pauseButtonDisabled: Bool {
-        guard remainingTime > 0, isTimerRunning else { return true }
-        return false
-    }
-    
-    var resetButtonDisabled: Bool {
-        guard remainingTime != length, !isTimerRunning else { return true }
-        return false
+
+    func updateTimer() {
+        if let lastSavedTime = UserDefaults.standard.value(forKey: "lastActiveTimeStamp") as? TimeInterval {
+            let elapsedTime = Int(Date().timeIntervalSince1970 - lastSavedTime)
+            if elapsedTime > 0 {
+                timeElapsed = min(timeElapsed + elapsedTime, length)
+            }
+        }
     }
 }
