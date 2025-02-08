@@ -25,16 +25,31 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         UNUserNotificationCenter.current().delegate = self
     }
 
-    func sendNotification(title: String, subtitle: String, sound: UNNotificationSound) {
-        let content = UNMutableNotificationContent()
-        content.title = title
-        content.subtitle = subtitle
-        content.sound = sound
+    func removeAllPendingNotificationRequests() {
+        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+    }
 
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+    func scheduleNotifications(durationTime: [Int], length: Int) {
         let notificationCenter = UNUserNotificationCenter.current()
-        notificationCenter.add(request)
+        for duration in durationTime {
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(duration), repeats: false)
+            let content = UNMutableNotificationContent()
+            content.title = "PresenTime"
+            content.subtitle = "The timer has reached \(duration.displayTimeForTotalSeconds())!"
+            content.sound = .default
+
+            let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+            notificationCenter.add(request)
+        }
+
+        let finalTrigger = UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(length), repeats: false)
+        let finalContent = UNMutableNotificationContent()
+        finalContent.title = "PresenTime"
+        finalContent.subtitle = "Time is up!"
+        finalContent.sound = .defaultCritical
+
+        let finalRequest = UNNotificationRequest(identifier: UUID().uuidString, content: finalContent, trigger: finalTrigger)
+        notificationCenter.add(finalRequest)
     }
 
     func checkNotificationPermission(completion: @escaping (Bool) -> Void) {

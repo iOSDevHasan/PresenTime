@@ -41,23 +41,21 @@ final class TimerVM: ObservableObject {
     }
 
     func startTimer() {
+        NotificationManager.shared.scheduleNotifications(durationTime: durationTime, length: length)
         isTimerRunning = true
         lastActiveTimeStamp = Date()
         UserDefaults.standard.set(lastActiveTimeStamp?.timeIntervalSince1970, forKey: "lastActiveTimeStamp")
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [self] _ in
             if remainingTime > 0 {
                 timeElapsed += 1
-                if durationTime.contains(timeElapsed) {
-                    NotificationManager.shared.sendNotification(title: "PresenTime", subtitle: "The timer has reached \(timeElapsed.displayTimeForTotalSeconds())!", sound: .defaultRingtone)
-                }
             } else {
-                NotificationManager.shared.sendNotification(title: "PresenTime", subtitle: "Time is up", sound: .defaultCritical)
                 stopTimer()
             }
         }
     }
     
     func stopTimer() {
+        NotificationManager.shared.removeAllPendingNotificationRequests()
         if isTimerRunning {
             isTimerRunning = false
             timer?.invalidate()
@@ -65,6 +63,7 @@ final class TimerVM: ObservableObject {
     }
     
     func resetTimer() {
+        NotificationManager.shared.removeAllPendingNotificationRequests()
         timeElapsed = 0
         isTimerRunning = false
     }
