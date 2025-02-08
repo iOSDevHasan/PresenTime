@@ -9,7 +9,7 @@ import SwiftUI
 
 struct TimerView: View {
 
-    let viewModel: TimerVM
+    @EnvironmentObject var viewModel: TimerVM
     @State private var width: CGFloat = 0
     @State private var isDurationButtonVisible: Bool = false
     @State private var showTimePicker = false

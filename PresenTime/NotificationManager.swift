@@ -8,7 +8,8 @@
 import UserNotifications
 import SwiftUI
 
-class NotificationManager {
+final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
+    
     static let shared = NotificationManager()
 
     func requestPermission(completion: @escaping (Bool) -> Void) {
@@ -21,6 +22,7 @@ class NotificationManager {
                 }
             }
         }
+        UNUserNotificationCenter.current().delegate = self
     }
 
     func sendNotification(title: String, subtitle: String, sound: UNNotificationSound) {
@@ -33,7 +35,6 @@ class NotificationManager {
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
         let notificationCenter = UNUserNotificationCenter.current()
         notificationCenter.add(request)
-        vibrateThreeTimes()
     }
 
     func checkNotificationPermission(completion: @escaping (Bool) -> Void) {
@@ -44,13 +45,7 @@ class NotificationManager {
         }
     }
 
-    private func vibrateThreeTimes() {
-        let generator = UIImpactFeedbackGenerator(style: .heavy)
-        generator.prepare()
-        for i in 0..<3 {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.5) {
-                generator.impactOccurred()
-            }
-        }
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.sound, .banner])
     }
 }

@@ -8,15 +8,18 @@
 import SwiftUI
 
 struct ContentView: View {
+    @EnvironmentObject var viewModel: TimerVM
+
     var body: some View {
-        TimerView(viewModel: TimerVM())
+        TimerView()
+            .environmentObject(viewModel)
             .onAppear {
                 NotificationManager.shared.requestPermission { _ in }
-                // TODO: Eger izin vermezse izin almasi icin ayarlara yonlendiricez. Popup.
             }
     }
 }
 
 #Preview {
     ContentView()
+        .environmentObject(TimerVM())
 }
