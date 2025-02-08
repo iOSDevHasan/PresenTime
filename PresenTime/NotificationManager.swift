@@ -9,8 +9,13 @@ import UserNotifications
 import SwiftUI
 
 final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
-    
+
+    // MARK: - PROPERTIES
+
     static let shared = NotificationManager()
+    private let notificationCenter = UNUserNotificationCenter.current()
+
+    // MARK: - METHODS
 
     func requestPermission(completion: @escaping (Bool) -> Void) {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { success, _ in
@@ -22,38 +27,22 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
                 }
             }
         }
-        UNUserNotificationCenter.current().delegate = self
+        notificationCenter.delegate = self
     }
 
     func removeAllPendingNotificationRequests() {
-        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+        notificationCenter.removeAllPendingNotificationRequests()
     }
 
-    func scheduleNotifications(durationTime: [Int], length: Int) {
-        let notificationCenter = UNUserNotificationCenter.current()
+    func scheduleNotifications(durationTime: [Int], length: Int, repeatTime: Int) {
         for duration in durationTime {
-            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(duration), repeats: false)
-            let content = UNMutableNotificationContent()
-            content.title = "PresenTime"
-            content.subtitle = "The timer has reached \(duration.displayTimeForTotalSeconds())!"
-            content.sound = .default
-
-            let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
-            notificationCenter.add(request)
+            scheduleRepeatedNotification(timeInterval: TimeInterval(duration), subtitle: "The timer has reached \(duration.displayTimeForTotalSeconds())!", sound: .default, repeatTime: repeatTime)
         }
-
-        let finalTrigger = UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(length), repeats: false)
-        let finalContent = UNMutableNotificationContent()
-        finalContent.title = "PresenTime"
-        finalContent.subtitle = "Time is up!"
-        finalContent.sound = .defaultCritical
-
-        let finalRequest = UNNotificationRequest(identifier: UUID().uuidString, content: finalContent, trigger: finalTrigger)
-        notificationCenter.add(finalRequest)
+        scheduleRepeatedNotification(timeInterval: TimeInterval(length), subtitle: "Time is up!", sound: .defaultCritical, repeatTime: repeatTime)
     }
 
     func checkNotificationPermission(completion: @escaping (Bool) -> Void) {
-        UNUserNotificationCenter.current().getNotificationSettings { settings in
+        notificationCenter.getNotificationSettings { settings in
             DispatchQueue.main.async {
                 completion(settings.authorizationStatus == .authorized)
             }
@@ -62,5 +51,20 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         completionHandler([.sound, .banner])
+    }
+
+    // MARK: - PRIVATE METHODS
+
+    private func scheduleRepeatedNotification(timeInterval: TimeInterval, subtitle: String, sound: UNNotificationSound, repeatTime: Int) {
+        for i in 0..<repeatTime {
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: timeInterval + Double(i), repeats: false)
+            let content = UNMutableNotificationContent()
+            content.title = "PresenTime"
+            content.subtitle = subtitle
+            content.sound = sound
+            
+            let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+            notificationCenter.add(request)
+        }
     }
 }

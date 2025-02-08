@@ -9,11 +9,16 @@ import SwiftUI
 
 final class TimerVM: ObservableObject {
 
+    // MARK: - PROPERTIES
+
     @Published var length: Int = 0
     @Published var timer: Timer? = nil
     @Published var timeElapsed = 0
     @Published var isTimerRunning = false
     @Published var durationTime: [Int] = []
+    @Published var repeatTime = 1
+
+    // MARK: - COMPUTED PROPERTIES
 
     var lastActiveTimeStamp: Date?
     
@@ -40,8 +45,10 @@ final class TimerVM: ObservableObject {
         return false
     }
 
+    // MARK: - METHODS
+
     func startTimer() {
-        NotificationManager.shared.scheduleNotifications(durationTime: durationTime, length: length)
+        NotificationManager.shared.scheduleNotifications(durationTime: durationTime, length: length, repeatTime: repeatTime)
         isTimerRunning = true
         lastActiveTimeStamp = Date()
         UserDefaults.standard.set(lastActiveTimeStamp?.timeIntervalSince1970, forKey: "lastActiveTimeStamp")
