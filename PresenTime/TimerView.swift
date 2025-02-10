@@ -38,6 +38,7 @@ struct TimerView: View {
                             viewModel.repeatTime = item
                         }) {
                             Text("Notification Repeats \(item) Time")
+                                .lineLimit(1)
                         }
                     }
                 } label: {
