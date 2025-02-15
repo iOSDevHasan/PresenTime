@@ -8,16 +8,21 @@
 import SwiftUI
 
 struct ContentView: View {
+
+    // MARK: - PROPERTIES
+
     @EnvironmentObject var viewModel: TimerVM
+
+    // MARK: - BODY
 
     var body: some View {
         TimerView()
             .environmentObject(viewModel)
-            .onAppear {
-                NotificationManager.shared.requestPermission { _ in }
-            }
+            .onAppear { NotificationManager.shared.requestPermission { _ in } }
     }
 }
+
+// MARK: - PREVIEW
 
 #Preview {
     ContentView()

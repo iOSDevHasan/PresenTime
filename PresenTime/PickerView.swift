@@ -9,19 +9,25 @@ import SwiftUI
 
 struct PickerView: View {
 
-    let maxSeconds: Int?
-    let pickerName: String
-    let pickerColor: Color
-    let completion: (Int) -> Void
+    // MARK: - PROPERTIES
 
     @Environment(\.dismiss) var dismiss
     @State private var selectedHours: Int = 0
     @State private var selectedMinutes: Int = 0
-    private let now = Date()
     private var maxHours: Int = 24
     private var maxMinutes: Int = 59
+    private let maxSeconds: Int?
+    private let pickerName: String
+    private let pickerColor: Color
+    private let completion: (Int) -> Void
+    private let now = Date()
 
-    init(maxSeconds: Int?, pickerName: String, pickerColor: Color, completion: @escaping (Int) -> Void) {
+    init(
+        maxSeconds: Int?,
+        pickerName: String,
+        pickerColor: Color,
+        completion: @escaping (Int) -> Void
+    ) {
         self.maxSeconds = maxSeconds
         self.pickerName = pickerName
         self.pickerColor = pickerColor
@@ -31,6 +37,8 @@ struct PickerView: View {
             self.maxMinutes = (maxSeconds % 3600) / 60
         }
     }
+
+    // MARK: - BODY
 
     var body: some View {
 
@@ -77,12 +85,16 @@ struct PickerView: View {
         .padding()
     }
 
+    // MARK: - PRIVATE FUNCTIONS
+
     private func calculateTotalSeconds() {
         let totalSeconds = (selectedHours * 3600) + (selectedMinutes * 60)
         completion(totalSeconds)
         dismiss()
     }
 }
+
+// MARK: - PREVIEW
 
 #Preview {
     ContentView()
