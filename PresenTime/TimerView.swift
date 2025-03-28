@@ -9,22 +9,61 @@ import SwiftUI
 
 struct TimerView: View {
 
-    @EnvironmentObject var viewModel: TimerVM
+    // MARK: PROPERTIES
+
+    @EnvironmentObject private var viewModel: TimerVM
     @State private var width: CGFloat = 0
     @State private var isDurationButtonVisible: Bool = false
     @State private var showTimePicker = false
     @State private var showDurationTimePicker = false
     @State private var selectedColor: Color = .blue
+    @State private var repeatTimeList: [Int] = [1,2,3,4,5]
+
+    // MARK: - BODY
 
     var body: some View {
         VStack {
             Text("PresenTime")
-                .font(.title.bold())
+                .font(.title3.bold())
+
+            // MARK: - UTILS VIEW
+
             HStack {
+
+                // MARK: - RepeatTime PickerView
+
+                Menu {
+                    ForEach(repeatTimeList, id: \.self) { item in
+                        Button(action: {
+                            viewModel.repeatTime = item
+                        }) {
+                            Text("Notification Repeats \(item) Time")
+                                .lineLimit(1)
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "bell.badge.fill")
+                        Text("\(viewModel.repeatTime)")
+                        Image(systemName: "chevron.down")
+                    }
+                    .lineLimit(1)
+                    .foregroundColor(.white)
+                    .padding(.all, 10)
+                    .font(.system(size: 15).bold())
+                    .background(selectedColor)
+                    .cornerRadius(10)
+                }
+                .padding(.leading, 10)
+
+                // MARK: - Color PickerView
+
                 ColorPicker("", selection: $selectedColor)
                     .padding(.trailing, 10)
             }
-            // MARK: - Circle View
+
+            // MARK: - TIMER VIEW
+
             ZStack {
                 Circle()
                     .stroke(lineWidth: width / 10)
@@ -38,11 +77,10 @@ struct TimerView: View {
                     .rotationEffect(.degrees(-90))
                     .shadow(radius: 2)
                 Circle()
-                    .stroke(lineWidth: width / 20)
-                    .foregroundStyle(Color(uiColor: .systemBackground))
+                    .foregroundStyle(.white)
                     .shadow(color: selectedColor.opacity(0.6), radius: 5)
-                    .frame(width: width / 8)
-                    .offset(x: -width / 2)
+                    .frame(width: width / 6)
+                    .offset(x: -width / (viewModel.durationTime.isEmpty ? 2 : 2.1))
                     .rotationEffect(.degrees(90.0 - 360 * viewModel.progress))
                 VStack {
                     Text(viewModel.length.displayTimeForTotalSeconds())
@@ -69,7 +107,8 @@ struct TimerView: View {
             .padding(width / 8)
             .animation(.linear, value: viewModel.remainingTime)
 
-            // MARK: - Action Buttons
+            // MARK: - ACTION BUTTON VIEW
+
             HStack {
                 Button {
                     viewModel.startTimer()
@@ -91,7 +130,8 @@ struct TimerView: View {
                 .modifier(ControlButtonStyle(color: selectedColor, disabled: viewModel.resetButtonDisabled))
             }
 
-            // MARK: - Set&Duration Buttons
+            // MARK: - SET&ADD BUTTON VIEW
+
             HStack(spacing: 50) {
                 Button {
                     showTimePicker = true
@@ -104,7 +144,7 @@ struct TimerView: View {
                         .cornerRadius(10)
                 }
                 .sheet(isPresented: $showTimePicker) {
-                    PickerView(maxSeconds: nil, pickerName: "Set a time!", pickerColor: selectedColor) { selectedTime in
+                    PickerView(maxSeconds: nil, pickerName: "Set Time!", pickerColor: selectedColor) { selectedTime in
                         viewModel.length = selectedTime
                         if viewModel.length > 0 {
                             viewModel.durationTime.removeAll()
@@ -137,7 +177,8 @@ struct TimerView: View {
             }
             .padding()
 
-            // MARK: - Duration List View
+            // MARK: - LIST VIEW
+
             if !viewModel.durationTime.isEmpty {
                 VStack(alignment: .leading) {
                     Text("DURATIONS")
@@ -171,9 +212,7 @@ struct TimerView: View {
     }
 }
 
-#Preview {
-    ContentView()
-}
+// MARK: - ControlButtonStyle ViewModifier
 
 struct ControlButtonStyle: ViewModifier {
     let color: Color
